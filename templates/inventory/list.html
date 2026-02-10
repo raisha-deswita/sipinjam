@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Inventaris{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Daftar Inventaris</h1>
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <p class="text-muted">Kelola data alat dan barang sekolah.</p>
+        </div>
+        <div class="col-md-6 text-end">
+            {% if user.role == 'admin' %}
+            <a href="{% url 'inventory:add' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Tambah Barang Baru
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Kode</th>
+                        <th>Nama Alat</th>
+                        <th>Kategori</th>
+                        <th>Stok</th>
+                        <th>Kondisi</th>
+                        <th>Lokasi</th>
+                        
+                        {% if user.role == 'admin' or user.role == 'petugas' %}
+                        <th>Aksi</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alat in alats %}
+                    <tr>
+                        <td>{{ alat.kode_barang|default:"-" }}</td>
+                        <td>{{ alat.nama_alat }}</td>
+                        <td>{{ alat.kategori.nama_kategori }}</td>
+                        <td>{{ alat.stok }}</td>
+                        <td>
+                            {% if alat.kondisi == 'baik' %}
+                                <span class="badge bg-success">Baik</span>
+                            {% elif alat.kondisi == 'rusak' %}
+                                <span class="badge bg-warning text-dark">Rusak</span>
+                            {% else %}
+                                <span class="badge bg-danger">Hilang</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ alat.lokasi }}</td>
+
+                        {% if user.role == 'admin' or user.role == 'petugas' %}
+                        <td>
+                            <a href="{% url 'inventory:edit' alat.id %}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+
+                            {% if user.role == 'admin' %}
+                                <a href="{% url 'inventory:delete' alat.id %}" 
+                                class="btn btn-danger btn-sm" 
+                                onclick="return confirm('Yakin mau hapus {{ alat.nama_alat }}? Data tidak bisa kembali!');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            {% endif %}
+
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center">Belum ada data barang.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

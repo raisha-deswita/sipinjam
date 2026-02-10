@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Kategori{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Daftar Kategori Alat</h1>
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <p class="text-muted">Kelompokkan alat berdasarkan jenisnya.</p>
+        </div>
+        <div class="col-md-6 text-end">
+            {% if user.role == 'admin' or user.role == 'petugas' %}
+            <a href="{% url 'inventory:kategori_add' %}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Tambah Kategori
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Nama Kategori</th>
+                        <th>Keterangan</th>
+                        {% if user.role == 'admin' or user.role == 'petugas' %}
+                        <th style="width: 150px;">Aksi</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for kat in kategoris %}
+                    <tr>
+                        <td class="fw-bold">{{ kat.nama_kategori }}</td>
+                        <td>{{ kat.keterangan|default:"-" }}</td>
+
+                        {% if user.role == 'admin' or user.role == 'petugas' %}
+                        <td>
+                            <a href="{% url 'inventory:kategori_edit' kat.id %}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            
+                            {% if user.role == 'admin' %}
+                            <a href="{% url 'inventory:kategori_delete' kat.id %}" 
+                               class="btn btn-danger btn-sm" 
+                               onclick="return confirm('Hapus kategori ini?');">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center">Belum ada kategori.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
