@@ -11,10 +11,14 @@
             <p class="text-muted">Kelola data alat dan barang sekolah.</p>
         </div>
         <div class="col-md-6 text-end">
-            {% if user.role == 'admin' %}
-            <a href="{% url 'inventory:add' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Tambah Barang Baru
-            </a>
+            {% if user.role in 'admin,petugas' %}
+                <a href="{% url 'inventory:download_aset' %}" class="btn btn-success me-2">
+                    <i class="fas fa-file-excel"></i> Download Data Aset
+                </a>
+        
+                <a href="{% url 'inventory:add' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Tambah Barang Baru
+                </a>
             {% endif %}
         </div>
     </div>

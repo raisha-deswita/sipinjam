@@ -5,12 +5,13 @@ from applications.inventory.models import Alat
 
 class Peminjaman(models.Model):
     STATUS_CHOICES = [
+        ('pending', 'Menunggu Persetujuan'),
         ('dipinjam', 'Sedang Dipinjam'),
         ('dikembalikan', 'Sudah Dikembalikan'),
         ('hilang', 'Hilang'),
+        ('ditolak', 'Ditolak'),
     ]
 
-    # Relasi
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE, 
@@ -21,7 +22,7 @@ class Peminjaman(models.Model):
         on_delete=models.CASCADE,
         related_name='peminjaman_alat'
     )
-    # Petugas yang melayani peminjaman (Optional tapi bagus buat nilai plus)
+    
     petugas = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -30,16 +31,19 @@ class Peminjaman(models.Model):
         related_name='peminjaman_petugas'
     )
 
-    # Data Transaksi
     jumlah = models.PositiveIntegerField(default=1)
     waktu_pinjam = models.DateTimeField(default=timezone.now)
     waktu_kembali_rencana = models.DateTimeField()
     
-    # Snapshot Denda (Biar kalau harga denda naik, transaksi lama aman)
-    denda_per_hari = models.PositiveIntegerField(default=5000, help_text="Nominal denda per hari")
+    denda_per_hari = models.PositiveIntegerField(default=0, help_text="Nominal denda per hari (snapshot)")
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='dipinjam')
     catatan = models.TextField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.pk: 
+            self.denda_per_hari = self.alat.denda_per_hari
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user.username} - {self.alat.nama_alat}"
@@ -51,14 +55,12 @@ class Peminjaman(models.Model):
 
 
 class Pengembalian(models.Model):
-    # OneToOne karena 1 Peminjaman cuma punya 1 Pengembalian
     peminjaman = models.OneToOneField(
         Peminjaman,
         on_delete=models.CASCADE,
         related_name='detail_pengembalian'
     )
     
-    # Petugas yang menerima barang (Optional)
     petugas = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -69,11 +71,31 @@ class Pengembalian(models.Model):
 
     waktu_kembali_realisasi = models.DateTimeField(auto_now_add=True)
     
-    # Kondisi barang pas balik (PENTING buat inventory)
     kondisi_akhir = models.CharField(
         max_length=20, 
         choices=[('baik', 'Baik'), ('rusak', 'Rusak'), ('hilang', 'Hilang')],
         default='baik'
+    )
+
+    biaya_kerusakan = models.PositiveIntegerField( 
+        default=0,
+        help_text="Biaya perbaikan jika barang rusak (diinput petugas)"
+    )
+
+    STATUS_BAYAR = [
+        ('lunas', 'Lunas'),
+        ('belum_lunas', 'Belum Lunas'),
+    ]
+    status_pembayaran = models.CharField(
+        max_length=20, 
+        choices=STATUS_BAYAR, 
+        default='belum_lunas' 
+    )
+
+    catatan = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text="Detail kerusakan atau keterangan tambahan"
     )
 
     terlambat = models.IntegerField(default=0)
