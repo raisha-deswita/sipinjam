@@ -23,7 +23,7 @@ class Alat(models.Model):
         related_name='list_alat'
     )
     
-    nama_alat = models.CharField(max_length=150)
+    nama_alat = models.CharField(max_length=150, unique=True)
     stok = models.PositiveIntegerField(default=0)
     kondisi = models.CharField(max_length=20, choices=KONDISI_CHOICES, default='baik')
     lokasi = models.CharField(max_length=100, verbose_name="Lokasi Penyimpanan")
