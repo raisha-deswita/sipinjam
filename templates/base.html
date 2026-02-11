@@ -17,19 +17,33 @@
         <div class="collapse navbar-collapse">
           <ul class="navbar-nav ms-auto">
             {% if user.is_authenticated %}
+
               <li class="nav-item">
-                  <a class="nav-link" href="{% url 'inventory:list' %}">
-                      <i class="fas fa-boxes"></i>Data Inventaris
+                  <a class="nav-link" href="{% url 'dashboard' %}">
+                      <i class="fas fa-tachometer-alt"></i> Dashboard
                   </a>
               </li>
-            {% endif %}
-            {% if user.is_authenticated %}
+
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'inventory:list' %}">
+                      <i class="fas fa-boxes"></i> Data Inventaris
+                  </a>
+              </li>
+
               <li class="nav-item">
                   <a class="nav-link" href="{% url 'inventory:kategori_list' %}">
                       <i class="fas fa-tags"></i> Kategori Alat
                   </a>
               </li>
+
+              <li class="nav-item">
+                  <a class="nav-link" href="{% url 'borrowing:list' %}">
+                      <i class="fas fa-hand-holding"></i> Transaksi Peminjaman
+                  </a>
+              </li>
+
             {% endif %}
+            
             {% if user.is_authenticated %}
               <li class="nav-item">
                 <span class="nav-link text-white">Hello, {{ user.username }} ({{ user.role }})</span>

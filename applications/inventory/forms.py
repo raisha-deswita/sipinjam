@@ -14,7 +14,7 @@ class KategoriForm(forms.ModelForm):
 class AlatForm(forms.ModelForm):
     class Meta:
         model = Alat
-        fields = ['nama_alat', 'kategori', 'stok', 'kondisi', 'lokasi', 'denda_per_hari']
+        fields = ['nama_alat', 'kategori', 'stok', 'kondisi', 'lokasi', 'denda_per_hari', 'denda_ganti_rugi']
         widgets = {
             'nama_alat': forms.TextInput(attrs={'class': 'form-control'}),
             'kategori': forms.Select(attrs={'class': 'form-select'}),
@@ -22,6 +22,7 @@ class AlatForm(forms.ModelForm):
             'kondisi': forms.Select(attrs={'class': 'form-select'}),
             'lokasi': forms.TextInput(attrs={'class': 'form-control'}),
             'denda_per_hari': forms.NumberInput(attrs={'class': 'form-control'}),
+            'denda_ganti_rugi': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
     def clean_stok(self):

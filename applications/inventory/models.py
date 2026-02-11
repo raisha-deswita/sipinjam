@@ -28,6 +28,10 @@ class Alat(models.Model):
     kondisi = models.CharField(max_length=20, choices=KONDISI_CHOICES, default='baik')
     lokasi = models.CharField(max_length=100, verbose_name="Lokasi Penyimpanan")
     denda_per_hari = models.IntegerField(default=0)
+    denda_ganti_rugi = models.PositiveIntegerField(
+        default=0, 
+        help_text="Nominal harga ganti rugi jika barang hilang/rusak"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

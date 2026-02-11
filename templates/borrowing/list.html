@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Peminjaman{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">📋 Daftar Peminjaman</h1>
+    
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <p class="text-muted">Pantau status peminjaman alat di sini.</p>
+        </div>
+        <div class="col-md-6 text-end">
+            
+            {% if user.role in 'admin,petugas' %}
+            <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#modalLaporan">
+                <i class="fas fa-file-excel"></i> Download Laporan
+            </button>
+            {% endif %}
+
+            <a href="{% url 'borrowing:add' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Ajukan Peminjaman
+            </a>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalLaporan" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title"><i class="fas fa-file-alt"></i> Pusat Laporan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <form action="{% url 'borrowing:download_laporan' %}" method="get">
+                    <div class="modal-body">
+                        <div class="alert alert-info small">
+                            Pilih rentang tanggal untuk mencetak laporan.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Dari Tanggal</label>
+                            <input type="date" name="start_date" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Sampai Tanggal</label>
+                            <input type="date" name="end_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer d-flex justify-content-between">
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-list"></i> Data Peminjaman
+                        </button>
+
+                        <button type="submit" 
+                                class="btn btn-success" 
+                                formaction="{% url 'borrowing:download_denda' %}">
+                            <i class="fas fa-money-bill-wave"></i> Laporan Denda
+                        </button>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <i class="fas fa-table me-1"></i> Data Transaksi
+        </div>
+        <div class="card-body">
+            <table class="table table-hover table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>No</th>
+                        <th>Peminjam</th>
+                        <th>Alat</th>
+                        <th>Tgl Pinjam</th>
+                        <th>Tenggat (Rencana)</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in peminjaman_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <strong>{{ p.user.username }}</strong>
+                            {% if p.user.role == 'siswa' %}
+                                <span class="badge bg-secondary" style="font-size: 0.6em;">Siswa</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ p.alat.nama_alat }} <span class="badge bg-info text-dark">{{ p.jumlah }} Unit</span></td>
+                        <td>{{ p.waktu_pinjam|date:"d M Y H:i" }}</td>
+                        
+                        <td class="{% if p.status == 'dipinjam' and p.waktu_kembali_rencana|date:'Y-m-d' < now|date:'Y-m-d' %}table-danger text-danger fw-bold{% endif %}">
+                            {{ p.waktu_kembali_rencana|date:"d M Y" }}
+                        </td>
+
+                        <td>
+                            {% if p.status == 'pending' %}
+                                <span class="badge bg-secondary">⏳ Menunggu</span>
+                            {% elif p.status == 'dipinjam' %}
+                                <span class="badge bg-warning text-dark">🔑 Dipinjam</span>
+                            {% elif p.status == 'dikembalikan' %}
+                                <span class="badge bg-success">✅ Selesai</span>
+                            {% elif p.status == 'hilang' %}
+                                <span class="badge bg-danger">❌ Hilang</span>
+                            {% elif p.status == 'ditolak' %}
+                                <span class="badge bg-dark">⛔ Ditolak</span>
+                            {% endif %}
+
+                            {% if p.detail_pengembalian and p.detail_pengembalian.total_denda > 0 %}
+                                <div class="mt-1">
+                                    {% if p.detail_pengembalian.status_pembayaran == 'belum_lunas' %}
+                                        <span class="badge bg-danger border border-light">
+                                            Hutang: Rp {{ p.detail_pengembalian.total_denda }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-primary border border-light">
+                                            <i class="fas fa-check-circle"></i> Lunas
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-center align-middle">
+    
+                            {% if user.role in 'admin,petugas' %}
+                                
+                                {% if p.status == 'pending' %}
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'borrowing:approve' p.id %}" class="btn btn-sm btn-success" title="Setujui">
+                                            <i class="fas fa-check"></i>
+                                        </a>
+                                        <a href="{% url 'borrowing:reject' p.id %}" class="btn btn-sm btn-danger" title="Tolak" onclick="return confirm('Tolak pengajuan?');">
+                                            <i class="fas fa-times"></i>
+                                        </a>
+                                    </div>
+                                
+                                {% elif p.status == 'dipinjam' %}
+                                    <a href="{% url 'borrowing:kembali' p.id %}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-undo-alt"></i> Proses Kembali
+                                    </a>
+
+                                {% elif p.status in 'dikembalikan,hilang' %}
+                                    
+                                    {% if p.status == 'dikembalikan' %}
+                                        <span class="text-muted small"><i class="fas fa-check-double"></i> Selesai</span>
+                                    {% else %}
+                                        <span class="text-danger small fw-bold">Ganti Rugi</span>
+                                    {% endif %}
+
+                                    {% if p.detail_pengembalian.total_denda > 0 and p.detail_pengembalian.status_pembayaran == 'belum_lunas' %}
+                                        <br>
+                                        <a href="{% url 'borrowing:lunasi' p.id %}" 
+                                        class="btn btn-sm btn-warning fw-bold text-dark mt-1" 
+                                        title="Terima Pembayaran"
+                                        onclick="return confirm('Terima uang denda Rp {{ p.detail_pengembalian.total_denda }}?');">
+                                            <i class="fas fa-money-bill-wave"></i> Terima Bayar
+                                        </a>
+                                    {% endif %}
+
+                                {% elif p.status == 'ditolak' %}
+                                    <span class="badge bg-secondary">⛔ Dibatalkan</span>
+                                {% endif %}
+
+                            {% else %}
+                                <span class="text-muted small">
+                                    {% if p.status == 'pending' %}
+                                        Menunggu...
+                                    {% elif p.detail_pengembalian.total_denda > 0 %}
+                                        {% if p.detail_pengembalian.status_pembayaran == 'belum_lunas' %}
+                                            <span class="text-danger fw-bold">Bayar: Rp {{ p.detail_pengembalian.total_denda }}</span>
+                                        {% else %}
+                                            <span class="text-primary fw-bold"><i class="fas fa-check"></i> Lunas</span>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <i class="fas fa-folder-open fa-2x mb-2"></i><br>
+                            Belum ada data peminjaman.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

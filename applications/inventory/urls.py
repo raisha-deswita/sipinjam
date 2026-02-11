@@ -15,4 +15,5 @@ urlpatterns = [
     path('add/', views.add_alat, name='add'),
     path('edit/<int:pk>/', views.edit_alat, name='edit'),
     path('delete/<int:pk>/', views.delete_alat, name='delete'),
+    path('download-aset/', views.download_excel_alat, name='download_aset'),
 ]

@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from applications.accounts.decorators import role_required
 from applications.activitylog.utils import log_activity
+import csv
+from django.http import HttpResponse
+from django.utils import timezone
 from .models import Alat, KategoriAlat
 from .forms import AlatForm, KategoriForm
 
@@ -111,3 +114,34 @@ def edit_alat(request, pk):
         'title': f'Edit Barang: {alat.nama_alat}'
     }
     return render(request, 'inventory/form.html', context)
+
+# download csv untuk laporan stok/barang
+@login_required
+@role_required(['admin', 'petugas'])
+def download_excel_alat(request):
+    response = HttpResponse(content_type='text/csv')
+    filename = f"laporan_aset_sekolah_{timezone.now().date()}.csv"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow(['ID', 'Kode Alat', 'Nama Alat', 'Kategori', 'Stok Total', 'Stok Tersedia', 'Kondisi', 'Lokasi', 'Harga Satuan', 'Total Nilai Aset'])
+
+    alat_list = Alat.objects.select_related('kategori').all().order_by('kategori', 'nama_alat')
+
+    for alat in alat_list:
+        total_nilai = alat.denda_ganti_rugi * alat.stok
+
+        writer.writerow([
+            alat.id,
+            f"BRG-{alat.id:04d}",
+            alat.nama_alat,
+            alat.kategori.nama_kategori if alat.kategori else '-',
+            alat.stok,
+            alat.stok,
+            alat.kondisi,
+            alat.lokasi,
+            alat.denda_ganti_rugi,
+            total_nilai
+        ])
+
+    return response
