@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Tambah Petugas{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-xl-6">
+        
+        <div class="text-center mb-4">
+            <h1 class="h3">Tambah Akun Petugas</h1>
+            <p class="text-muted">Akun ini memiliki akses untuk memproses peminjaman.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0 text-white"><i class="fas fa-user-shield"></i> Form Data Petugas</h5>
+            </div>
+            <div class="card-body">
+                
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        Perbaiki kesalahan berikut:
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nama Depan</label>
+                            <input type="text" name="first_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nama Belakang</label>
+                            <input type="text" name="last_name" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" name="username" class="form-control" required>
+                        {% if form.username.errors %}
+                            <small class="text-danger">{{ form.username.errors.0 }}</small>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Password Default</label>
+                        <input type="password" name="password1" class="form-control" placeholder="Password untuk login petugas" required>
+                        <small class="text-muted">Minta petugas untuk segera mengganti password setelah login.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Konfirmasi Password</label>
+                        <input type="password" name="password2" class="form-control" required>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Simpan Data Petugas
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-light">Batal</a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

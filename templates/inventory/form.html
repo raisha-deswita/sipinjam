@@ -1,50 +1,133 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid p-0">
+
+    <div class="row mb-2 mb-xl-3">
+        <div class="col-auto d-none d-sm-block">
+            <h3><strong>Manajemen</strong> Inventaris</h3>
+        </div>
+        <div class="col-auto ms-auto text-end mt-n1">
+            <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary shadow-sm">
+                <i class="align-middle" data-feather="arrow-left"></i> Kembali
+            </a>
+        </div>
+    </div>
+
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-lg">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">{{ title }}</h4>
+        <div class="col-12 col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{{ title }}</h5>
+                    <div class="text-muted small mt-1">Pastikan data aset valid sebelum disimpan.</div>
                 </div>
                 <div class="card-body">
                     
-                    <form method="post">
-                        {% csrf_token %}
+                    <form method="post" enctype="multipart/form-data"> {% csrf_token %}
                         
                         {% for field in form %}
                         <div class="mb-3">
-                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            <label class="form-label">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                            </label>
                             
                             {% if user.role == 'petugas' and field.name != 'kondisi' and field.name != 'stok' %}
-                                <input type="text" class="form-control bg-light" value="{{ field.value|default:'' }}" readonly>
-                                <div d-none>{{ field }}</div>
-                                <small class="text-danger">*Petugas hanya bisa ubah Kondisi & Stok</small>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="align-middle" data-feather="lock" style="width: 14px;"></i>
+                                    </span>
+                                    <input type="text" class="form-control bg-light border-start-0" value="{{ field.value|default:'' }}" readonly>
+                                </div>
+                                
+                                <div class="d-none">{{ field }}</div>
+                                <div class="form-text text-muted">
+                                    <i class="align-middle" data-feather="info" style="width: 12px;"></i> 
+                                    Akses terbatas. Hanya Admin yang bisa mengubah ini.
+                                </div>
                             
                             {% else %}
                                 {{ field }}
-                            {% endif %}
-                            
-                            {% if field.errors %}
-                                <div class="text-danger small">{{ field.errors }}</div>
+                                
+                                {% if field.help_text %}
+                                    <div class="form-text text-muted">{{ field.help_text }}</div>
+                                {% endif %}
+
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                        <div class="text-danger small mt-1">
+                                            <i class="align-middle" data-feather="alert-circle" style="width: 14px;"></i> 
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
                             {% endif %}
                         </div>
                         {% endfor %}
 
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'inventory:list' %}" class="btn btn-secondary">Kembali</a>
+                        <hr>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'inventory:list' %}" class="btn btn-light me-md-2">Batal</a>
                             <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i> Simpan Data
+                                <i class="align-middle me-1" data-feather="save"></i> Simpan Data
                             </button>
                         </div>
+
                     </form>
 
                 </div>
             </div>
         </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Catatan Sistem</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Role: {{ user.role|title }}</strong>
+                        <p class="text-muted small">
+                            {% if user.role == 'petugas' %}
+                                Anda dalam mode Petugas. Anda hanya diizinkan memperbarui <b>Stok</b> dan <b>Kondisi</b> barang untuk keperluan opname harian.
+                            {% else %}
+                                Anda memiliki akses penuh untuk menambah, mengubah, dan menghapus data inventaris sekolah.
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    {% if user.role == 'admin' %}
+                    <div class="alert alert-info small mb-0">
+                        <i class="align-middle me-1" data-feather="help-circle" style="width: 14px;"></i>
+                        Gunakan kode barang yang unik agar mudah saat scan barcode.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var inputs = document.querySelectorAll('form input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), form select, form textarea');
+        inputs.forEach(function(input) {
+            // Cek kalau dia readonly (input petugas), jangan ditimpa class-nya biar background abu-abunya awet
+            if (!input.hasAttribute('readonly')) {
+                input.classList.add('form-control');
+            }
+            
+            if (input.tagName === 'SELECT') {
+                input.classList.remove('form-control');
+                input.classList.add('form-select');
+            }
+        });
+    });
+</script>
+
 {% endblock %}

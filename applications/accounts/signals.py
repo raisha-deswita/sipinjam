@@ -8,4 +8,5 @@ def catat_login(sender, request, user, **kwargs):
 
 @receiver(user_logged_out)
 def catat_logout(sender, request, user, **kwargs):
-    log_activity(user, "User melakukan Logout")
+    if user is not None:
+        log_activity(user, "User melakukan Logout")
