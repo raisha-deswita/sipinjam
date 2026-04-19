@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.validators import MinValueValidator
 
 class KategoriAlat(models.Model):
     nama_kategori = models.CharField(max_length=100)
@@ -24,7 +25,10 @@ class Alat(models.Model):
     )
     
     nama_alat = models.CharField(max_length=150, unique=True)
-    stok = models.PositiveIntegerField(default=0)
+    stok = models.PositiveIntegerField(
+        default=0, 
+        validators=[MinValueValidator(0)]
+    )
     kondisi = models.CharField(max_length=20, choices=KONDISI_CHOICES, default='baik')
     lokasi = models.CharField(max_length=100, verbose_name="Lokasi Penyimpanan")
     denda_per_hari = models.IntegerField(default=0)

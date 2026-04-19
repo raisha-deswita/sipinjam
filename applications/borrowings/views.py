@@ -4,12 +4,16 @@ from django.contrib import messages
 from django.db import transaction
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+from django.db.models import Count, Sum
 
+from applications.activitylog.models import ActivityLog
 from applications.accounts.decorators import role_required
 from applications.activitylog.utils import log_activity
 from .models import Peminjaman, Pengembalian
 from .forms import PeminjamanForm, PengembalianForm
 from applications.inventory.models import Alat
+from applications.accounts.models import CustomUser
 
 import csv
 from django.http import HttpResponse
@@ -18,47 +22,64 @@ from django.db.models import Q
 # list peminjaman/read
 @login_required
 def list_peminjaman(request):
-    # Admin/Petugas --> Bisa lihat semua data
-    # User Biasa --> Cuma bisa lihat data dirinya sendiri
+    query = request.GET.get('q')
+    status_filter = request.GET.get('status')
+    
+    # Base queryset: Admin/Petugas see all, Users see only theirs
     if request.user.role in ['admin', 'petugas']:
-        peminjaman_list = Peminjaman.objects.select_related('user', 'alat').all()
+        peminjaman = Peminjaman.objects.all().order_by('-waktu_pinjam')
     else:
-        peminjaman_list = Peminjaman.objects.filter(user=request.user).select_related('alat')
+        peminjaman = Peminjaman.objects.filter(user=request.user).order_by('-waktu_pinjam')
+
+    # Apply Search
+    if query:
+        peminjaman = peminjaman.filter(
+            Q(user__username__icontains=query) | 
+            Q(alat__nama_alat__icontains=query)
+        )
+
+    # Apply Status Filter
+    now = timezone.now()
+    if status_filter == 'terlambat':
+        peminjaman = peminjaman.filter(status='dipinjam', waktu_kembali_rencana__lt=now)
+    elif status_filter:
+        peminjaman = peminjaman.filter(status=status_filter)
 
     context = {
-        'peminjaman_list': peminjaman_list,
-        'title': 'Daftar Peminjaman'
+        'peminjaman_list': peminjaman,
+        'current_status': status_filter,
+        'now': now,
     }
     return render(request, 'borrowing/list.html', context)
 
-# Tambah Peminjaman/create -> stok berkurang
 @login_required
 def add_peminjaman(request):
     if request.method == 'POST':
-        form = PeminjamanForm(request.POST)
+        # Pass the user to the form
+        form = PeminjamanForm(request.POST, user=request.user)
         if form.is_valid():
             with transaction.atomic():
                 peminjaman = form.save(commit=False)
                 peminjaman.user = request.user
 
+                # Set status based on role
                 if request.user.role in ['admin', 'petugas']:
                     peminjaman.status = 'dipinjam'
-                    msg = "Peminjaman berhasil dicatat."
                 else:
                     peminjaman.status = 'pending'
-                    msg = "Pengajuan berhasil! Tunggu persetujuan petugas ya."
+
                 peminjaman.save()
 
+                # Update Stock
                 alat = peminjaman.alat
                 alat.stok -= peminjaman.jumlah
                 alat.save()
 
-                log_activity(request.user, f"Mengajukan peminjaman: {alat.nama_alat} ({peminjaman.jumlah} unit)")
-                
-                messages.success(request, msg)
+                log_activity(request.user, f"Peminjaman: {alat.nama_alat} ({peminjaman.jumlah})")
+                messages.success(request, "Berhasil diajukan!")
                 return redirect('borrowing:list')
     else:
-        form = PeminjamanForm()
+        form = PeminjamanForm(user=request.user)
 
     return render(request, 'borrowing/form_pinjam.html', {'form': form, 'title': 'Pinjam Alat'})
 
@@ -69,12 +90,15 @@ def approve_peminjaman(request, pk):
     peminjaman = get_object_or_404(Peminjaman, pk=pk)
     
     if peminjaman.status == 'pending':
-        peminjaman.status = 'dipinjam'
-        peminjaman.save()
-        
-        log_activity(request.user, f"Menyetujui peminjaman: {peminjaman.alat.nama_alat} oleh {peminjaman.user.username}")
-        messages.success(request, "Peminjaman disetujui! Barang siap diambil.")
-    
+        with transaction.atomic(): # Use atomic for safety
+            peminjaman.status = 'dipinjam'
+            peminjaman.petugas = request.user # Record who approved it
+            peminjaman.save()
+            
+            log_activity(request.user, f"Menyetujui peminjaman: {peminjaman.alat.nama_alat} oleh {peminjaman.user.username}")
+            messages.success(request, "Peminjaman disetujui! Barang siap diambil.")
+    else:
+        messages.error(request, "Hanya pengajuan 'Pending' yang bisa disetujui.")
     return redirect('borrowing:list')
 
 # reject -> balikin stok, tandai batal
@@ -108,25 +132,26 @@ def kembalikan_alat(request, pk):
         messages.warning(request, "Transaksi ini sudah selesai sebelumnya.")
         return redirect('borrowing:list')
 
+    # --- 1. CALCULATE FIRST (Available for both POST and GET) ---
+    today = timezone.now().date()
+    due_date = peminjaman.waktu_kembali_rencana.date()
+    selisih_hari = max(0, (today - due_date).days)
+    denda_telat = selisih_hari * peminjaman.denda_per_hari
+
     if request.method == 'POST':
-        form = PengembalianForm(request.POST)
+        form = PengembalianForm(request.POST, peminjaman_id=pk)
         if form.is_valid():
             with transaction.atomic():
                 pengembalian = form.save(commit=False)
                 pengembalian.peminjaman = peminjaman
                 pengembalian.petugas = request.user
-               
-                tanggal_janji = peminjaman.waktu_kembali_rencana.date()
-                tanggal_sekarang = timezone.now().date()
-                selisih_hari = (tanggal_sekarang - tanggal_janji).days
-                terlambat = max(0, selisih_hari)
-                denda_telat = terlambat * peminjaman.denda_per_hari
-
+                
+                # Use the calculations from above
                 kondisi = form.cleaned_data['kondisi_akhir']
-                input_biaya_perbaikan = form.cleaned_data['biaya_kerusakan']
+                # Note: We get biaya_kerusakan from POST because it's handled via partials
+                input_biaya_perbaikan = int(request.POST.get('biaya_kerusakan', 0))
                 
                 denda_fisik = 0
-
                 if kondisi == 'hilang':
                     denda_fisik = peminjaman.alat.denda_ganti_rugi
                 elif kondisi == 'rusak':
@@ -135,21 +160,21 @@ def kembalikan_alat(request, pk):
                     denda_fisik = 0
                 
                 total_bayar = denda_telat + denda_fisik
-                pengembalian.terlambat = terlambat
+                
+                # Saving to Pengembalian model
+                pengembalian.terlambat = selisih_hari
                 pengembalian.biaya_kerusakan = denda_fisik 
-                pengembalian.total_denda = denda_telat + denda_fisik 
+                pengembalian.total_denda = total_bayar
                 pengembalian.save()
 
+                # Update Alat and Peminjaman status
                 alat = peminjaman.alat
-                
                 if kondisi == 'hilang':
                     peminjaman.status = 'hilang'
-                
                 elif kondisi == 'rusak':
                     peminjaman.status = 'dikembalikan'
                     alat.stok += peminjaman.jumlah
                     alat.kondisi = 'rusak'
-                
                 else:
                     peminjaman.status = 'dikembalikan'
                     alat.stok += peminjaman.jumlah
@@ -162,15 +187,57 @@ def kembalikan_alat(request, pk):
                 
                 return redirect('borrowing:list')
     else:
-        form = PengembalianForm()
+        # Pass the ID for HTMX to work on initial load
+        form = PengembalianForm(peminjaman_id=pk)
 
+    # --- 2. CONTEXT (Variables are now guaranteed to exist) ---
     context = {
         'form': form,
         'peminjaman': peminjaman,
-        'denda_estimasi': 0,
+        'denda_telat': denda_telat,    
+        'terlambat': selisih_hari,
         'title': 'Proses Pengembalian'
     }
     return render(request, 'borrowing/form_kembali.html', context)
+
+def check_kondisi_view(request):
+    kondisi = request.GET.get('kondisi_akhir')
+    peminjaman_id = request.GET.get('peminjaman_id')
+    
+    # Safety check: if it's the string "None" or empty, don't crash
+    if not peminjaman_id or peminjaman_id == 'None':
+         return HttpResponse("Error: ID Peminjaman tidak terbaca.")
+
+    peminjaman = get_object_or_404(Peminjaman, id=peminjaman_id)
+
+    denda_telat = peminjaman.hitung_denda_telat
+    denda_fisik = 0
+    if kondisi == 'hilang':
+        denda_fisik = peminjaman.alat.denda_ganti_rugi
+    
+    total_tagihan = denda_telat + denda_fisik
+
+    context = {
+        'kondisi': kondisi,
+        'peminjaman': peminjaman,
+        'total_tagihan': total_tagihan, # To update #live-total
+        'denda_fisik': denda_fisik      # To update #live-fisik
+    }
+    return render(request, 'borrowing/partials/biaya_detail.html', context)
+    
+def update_receipt_view(request):
+    try:
+        biaya_tambahan = int(request.GET.get('biaya_kerusakan', 0))
+    except ValueError:
+        biaya_tambahan = 0
+        
+    peminjaman_id = request.GET.get('peminjaman_id')
+    peminjaman = get_object_or_404(Peminjaman, id=peminjaman_id)
+    
+    total = peminjaman.hitung_denda_telat + biaya_tambahan
+    
+    # Return just the number for the total
+    return HttpResponse(f"Rp {total:,}")
 
 # download laporan csv
 @login_required
