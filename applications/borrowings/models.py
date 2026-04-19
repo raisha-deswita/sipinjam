@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from applications.inventory.models import Alat 
+from django.core.exceptions import ValidationError
 
 class Peminjaman(models.Model):
     STATUS_CHOICES = [

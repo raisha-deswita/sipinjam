@@ -6,191 +6,165 @@
 {% block content %}
 <div class="container-fluid p-0">
 
-    <div class="row mb-2 mb-xl-3">
-        <div class="col-auto d-none d-sm-block">
-            <h3><strong>Halo, {{ user.first_name|default:user.username }}!</strong> 👋</h3>
-            <p class="text-muted">Siap melayani peminjaman hari ini?</p>
+    <div class="row mb-3">
+        <div class="col-auto">
+            <h3 class="mb-0"><strong>Halo, {{ user.username|title }}!</strong> 👋</h3>
+            <p class="text-muted small">Ada {{ pending_count }} permintaan yang menunggu persetujuanmu.</p>
         </div>
     </div>
 
     <div class="row">
-        
         <div class="col-sm-6 col-xl-3">
-            <div class="card">
+            <div class="card shadow-sm border-0">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col mt-0">
-                            <h5 class="card-title">Menunggu Approval</h5>
-                        </div>
+                        <div class="col mt-0"><h5 class="card-title text-muted">Butuh Approval</h5></div>
                         <div class="col-auto">
-                            <div class="stat text-primary">
-                                <i class="align-middle" data-feather="bell"></i>
-                            </div>
+                            <div class="stat bg-warning-light text-warning"><i data-feather="bell"></i></div>
                         </div>
                     </div>
-                    <h1 class="mt-1 mb-3">3 Request</h1>
-                    <div class="mb-0">
-                        <span class="text-danger"> <i class="mdi mdi-arrow-bottom-right"></i> Butuh Respon </span>
+                    <h1 class="mt-1 mb-3 fw-bold">{{ pending_count }}</h1>
+                    <div class="mb-0 small">
+                        <span class="text-warning fw-bold"><i class="fas fa-arrow-right me-1"></i> Segera Proses</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="card">
+            <div class="card shadow-sm border-0">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col mt-0">
-                            <h5 class="card-title">Barang Keluar</h5>
-                        </div>
+                        <div class="col mt-0"><h5 class="card-title text-muted">Barang Keluar</h5></div>
                         <div class="col-auto">
-                            <div class="stat text-primary">
-                                <i class="align-middle" data-feather="truck"></i>
-                            </div>
+                            <div class="stat bg-info-light text-info"><i data-feather="truck"></i></div>
                         </div>
                     </div>
-                    <h1 class="mt-1 mb-3">12 Unit</h1>
-                    <div class="mb-0">
-                        <span class="text-muted">Sedang digunakan siswa</span>
-                    </div>
+                    <h1 class="mt-1 mb-3 fw-bold">{{ dipinjam_count }}</h1>
+                    <div class="mb-0 small text-muted">Unit di tangan siswa</div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="card">
+            <div class="card shadow-sm border-0">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col mt-0">
-                            <h5 class="card-title">Terlambat</h5>
-                        </div>
+                        <div class="col mt-0"><h5 class="card-title text-muted">Terlambat</h5></div>
                         <div class="col-auto">
-                            <div class="stat text-danger">
-                                <i class="align-middle" data-feather="alert-circle"></i>
-                            </div>
+                            <div class="stat bg-danger-soft text-danger"><i data-feather="alert-octagon"></i></div>
                         </div>
                     </div>
-                    <h1 class="mt-1 mb-3">2 Siswa</h1>
-                    <div class="mb-0">
-                        <span class="text-danger fw-bold"> Segera Hubungi! </span>
-                    </div>
+                    <h1 class="mt-1 mb-3 fw-bold text-danger">{{ terlambat_count }}</h1>
+                    <div class="mb-0 small text-danger fw-bold">Perlu Ditindak</div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-3">
-            <div class="card">
+            <div class="card shadow-sm border-0 bg-primary text-white">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col mt-0">
-                            <h5 class="card-title">Aktivitas Hari Ini</h5>
-                        </div>
-                        <div class="col-auto">
-                            <div class="stat text-success">
-                                <i class="align-middle" data-feather="activity"></i>
-                            </div>
-                        </div>
+                        <div class="col mt-0"><h5 class="card-title text-white-50">Quick Link</h5></div>
+                        <div class="col-auto"><div class="stat bg-white-20 text-white"><i data-feather="plus"></i></div></div>
                     </div>
-                    <h1 class="mt-1 mb-3">24</h1>
-                    <div class="mb-0">
-                        <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Sibuk </span>
-                    </div>
+                    <h4 class="mt-1 mb-3 text-white fw-bold">Tambah Pinjam</h4>
+                    <a href="{% url 'borrowing:add' %}" class="btn btn-sm btn-light w-100">Buat Transaksi</a>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        
-        <div class="col-12 col-lg-4 col-xxl-3 d-flex">
-            <div class="card flex-fill w-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Aksi Cepat</h5>
-                </div>
-                <div class="card-body">
+        <div class="col-xl-4 d-flex">
+            <div class="card flex-fill shadow-sm border-0">
+                <div class="card-header bg-white border-0"><h5 class="card-title mb-0 fw-bold">Aksi Cepat</h5></div>
+                <div class="card-body pt-0">
                     <div class="d-grid gap-2">
-                        <a href="{% url 'borrowing:list' %}" class="btn btn-primary btn-lg">
+                        <a href="{% url 'borrowing:list' %}?status=pending" class="btn btn-primary py-3">
                             <i class="align-middle me-2" data-feather="check-square"></i> Proses Approval
                         </a>
-                        
-                        <a href="{% url 'borrowing:list' %}" class="btn btn-success btn-lg">
-                            <i class="align-middle me-2" data-feather="corner-down-left"></i> Terima Barang
+                        <a href="{% url 'borrowing:list' %}?status=dipinjam" class="btn btn-success py-3">
+                            <i class="align-middle me-2" data-feather="corner-down-left"></i> Terima Pengembalian
                         </a>
-
-                        <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary py-2">
                             <i class="align-middle me-2" data-feather="search"></i> Cek Stok Barang
                         </a>
                     </div>
-
-                    <hr>
-                    
-                    <div class="alert alert-info p-2 mb-0 mt-3">
-                        <small><i class="fas fa-info-circle"></i> Pastikan cek kondisi fisik barang sebelum menerima pengembalian.</small>
+                    <div class="alert alert-info mt-4 mb-0 small border-0 shadow-none">
+                        <i class="align-middle me-1" data-feather="info"></i>
+                        Selalu cek kondisi fisik barang sebelum konfirmasi pengembalian di sistem.
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-12 col-lg-8 col-xxl-9 d-flex">
-            <div class="card flex-fill">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Permintaan Masuk Terbaru</h5>
+        <div class="col-xl-8 d-flex">
+            <div class="card flex-fill shadow-sm border-0">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 fw-bold">Permintaan Perlu Tindakan</h5>
                     <a href="{% url 'borrowing:list' %}" class="btn btn-sm btn-light">Lihat Semua</a>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-hover my-0">
-                        <thead>
+                    <table class="table table-hover my-0 align-middle">
+                        <thead class="bg-light small text-muted text-uppercase">
                             <tr>
-                                <th>Siswa</th>
-                                <th class="d-none d-xl-table-cell">Barang</th>
-                                <th class="d-none d-xl-table-cell">Tanggal Pinjam</th>
+                                <th class="ps-4">Siswa</th>
+                                <th>Alat</th>
+                                <th>Tenggat</th>
                                 <th>Status</th>
-                                <th>Aksi</th>
+                                <th class="text-end pe-4">Opsi</th>
                             </tr>
                         </thead>
                         <tbody>
+                            {% for req in recent_requests %}
                             <tr>
-                                <td>
-                                    <img src="{% static 'img/avatars/avatar-3.jpg' %}" class="avatar img-fluid rounded-circle me-1" alt="Siswa"> 
-                                    <strong>Budi Santoso</strong>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <img src="{% static 'img/avatars/avatar.jpg' %}" class="avatar img-fluid rounded-circle me-2" width="28">
+                                        <span class="fw-bold">{{ req.user.username|title }}</span>
+                                    </div>
                                 </td>
-                                <td class="d-none d-xl-table-cell">Kamera DSLR Canon</td>
-                                <td class="d-none d-xl-table-cell">12 Feb 2026</td>
-                                <td><span class="badge bg-warning">Pending</span></td>
+                                <td>{{ req.alat.nama_alat }}</td>
                                 <td>
-                                    <a href="#" class="btn btn-sm btn-primary">Proses</a>
+                                    {% if req.status == 'dipinjam' and req.waktu_kembali_rencana < now %}
+                                        <span class="text-danger fw-bold small">{{ req.waktu_kembali_rencana|date:"d M" }} (Telat)</span>
+                                    {% else %}
+                                        <span class="small">{{ req.waktu_kembali_rencana|date:"d M Y" }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if req.status == 'pending' %}
+                                        <span class="badge bg-warning-soft text-warning px-2">Menunggu</span>
+                                    {% else %}
+                                        <span class="badge bg-primary-soft text-primary px-2">Dipinjam</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    {% if req.status == 'pending' %}
+                                        <a href="{% url 'borrowing:approve' req.id %}" class="btn btn-sm btn-success">Setujui</a>
+                                    {% else %}
+                                        <a href="{% url 'borrowing:kembali' req.id %}" class="btn btn-sm btn-outline-primary">Terima</a>
+                                    {% endif %}
                                 </td>
                             </tr>
-                            <tr>
-                                <td>
-                                    <img src="{% static 'img/avatars/avatar-4.jpg' %}" class="avatar img-fluid rounded-circle me-1" alt="Siswa"> 
-                                    <strong>Siti Aminah</strong>
-                                </td>
-                                <td class="d-none d-xl-table-cell">Laptop Asus ROG</td>
-                                <td class="d-none d-xl-table-cell">12 Feb 2026</td>
-                                <td><span class="badge bg-warning">Pending</span></td>
-                                <td>
-                                    <a href="#" class="btn btn-sm btn-primary">Proses</a>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <img src="{% static 'img/avatars/avatar-5.jpg' %}" class="avatar img-fluid rounded-circle me-1" alt="Siswa"> 
-                                    <strong>Rizky Febian</strong>
-                                </td>
-                                <td class="d-none d-xl-table-cell">Tripod Takara</td>
-                                <td class="d-none d-xl-table-cell">11 Feb 2026</td>
-                                <td><span class="badge bg-success">Dipinjam</span></td>
-                                <td>
-                                    <span class="text-muted small">Sedang Dipakai</span>
-                                </td>
-                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center py-4">Semua pekerjaan beres! Tidak ada permintaan aktif.</td></tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-
 </div>
+
+<style>
+    .bg-warning-light { background: rgba(255, 193, 7, 0.1); }
+    .bg-info-light { background: rgba(23, 162, 184, 0.1); }
+    .bg-danger-soft { background: rgba(220, 53, 69, 0.1); }
+    .bg-warning-soft { background: rgba(255, 193, 7, 0.1); }
+    .bg-primary-soft { background: rgba(59, 125, 221, 0.1); }
+    .bg-white-20 { background: rgba(255, 255, 255, 0.2); }
+</style>
 {% endblock %}

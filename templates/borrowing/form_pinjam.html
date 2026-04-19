@@ -39,6 +39,20 @@
                     <form method="post">
                         {% csrf_token %}
 
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <div class="alert-icon">
+                                    <i class="align-middle" data-feather="alert-octagon"></i>
+                                </div>
+                                <div class="alert-message">
+                                    {% for error in form.non_field_errors %}
+                                        <strong>Kesalahan:</strong> {{ error }}
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+
                         {% for field in form %}
                             <div class="mb-3">
                                 <label class="form-label">

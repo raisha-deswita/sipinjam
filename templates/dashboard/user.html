@@ -1,84 +1,79 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Dashboard Siswa{% endblock %}
 
 {% block content %}
 <div class="container-fluid p-0">
 
-    <div class="row mb-2 mb-xl-3">
-        <div class="col-auto d-none d-sm-block">
-            <h3><strong>Selamat Datang, {{ user.first_name|default:user.username }}!</strong> 🎓</h3>
-            <p class="text-muted">Mau pinjam alat apa hari ini?</p>
+    <div class="row mb-3 align-items-center">
+        <div class="col-auto">
+            <h3><strong>Halo, {{ user.username|title }}!</strong> 🎓</h3>
+            <p class="text-muted small mb-0">Kamu punya {{ my_loans_count }} alat yang harus dijaga.</p>
         </div>
-        
-        <div class="col-auto ms-auto text-end mt-n1">
-            <a href="{% url 'inventory:list' %}" class="btn btn-primary shadow-sm">
-                <i class="align-middle" data-feather="plus"></i> Pinjam Alat Baru
+        <div class="col-auto ms-auto">
+            <a href="{% url 'inventory:list' %}" class="btn btn-primary shadow-sm px-4">
+                <i class="align-middle me-1" data-feather="plus"></i> Pinjam Alat Baru
             </a>
         </div>
     </div>
 
     <div class="row">
-        
         <div class="col-sm-6 col-xl-4">
-            <div class="card">
+            <div class="card shadow-sm border-0">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col mt-0">
-                            <h5 class="card-title">Sedang Dipinjam</h5>
-                        </div>
+                        <div class="col mt-0"><h5 class="card-title text-muted">Sedang Dipinjam</h5></div>
                         <div class="col-auto">
-                            <div class="stat text-primary">
-                                <i class="align-middle" data-feather="briefcase"></i>
-                            </div>
+                            <div class="stat bg-primary-light text-primary"><i data-feather="briefcase"></i></div>
                         </div>
                     </div>
-                    <h1 class="mt-1 mb-3">1 Item</h1> 
-                    <div class="mb-0">
-                        <span class="text-muted">Jangan lupa dikembalikan ya!</span>
+                    <h1 class="mt-1 mb-3 fw-bold">{{ my_loans_count }} Item</h1>
+                    <div class="mb-0 small text-muted">Pastikan barang aman & tidak rusak.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col mt-0"><h5 class="card-title text-muted">Menunggu Approval</h5></div>
+                        <div class="col-auto">
+                            <div class="stat bg-warning-light text-warning"><i data-feather="clock"></i></div>
+                        </div>
+                    </div>
+                    <h1 class="mt-1 mb-3 fw-bold">{{ my_pending }} Request</h1>
+                    <div class="mb-0 small">
+                        {% if my_pending > 0 %}
+                            <span class="text-warning fw-bold">Sedang dicek petugas</span>
+                        {% else %}
+                            <span class="text-success fw-bold">Semua pengajuan diproses</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-sm-6 col-xl-4">
-            <div class="card">
+            <div class="card shadow-sm border-0 {% if my_debt > 0 %}bg-danger-light{% endif %}">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col mt-0">
-                            <h5 class="card-title">Menunggu Approval</h5>
-                        </div>
+                        <div class="col mt-0"><h5 class="card-title {% if my_debt > 0 %}text-danger{% else %}text-muted{% endif %}">Tunggakan Denda</h5></div>
                         <div class="col-auto">
-                            <div class="stat text-warning">
-                                <i class="align-middle" data-feather="clock"></i>
+                            <div class="stat {% if my_debt > 0 %}bg-danger text-white{% else %}bg-success-light text-success{% endif %}">
+                                <i data-feather="dollar-sign"></i>
                             </div>
                         </div>
                     </div>
-                    <h1 class="mt-1 mb-3">0 Request</h1>
-                    <div class="mb-0">
-                        <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Semua aman </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-sm-6 col-xl-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col mt-0">
-                            <h5 class="card-title">Tagihan Denda</h5>
-                        </div>
-                        <div class="col-auto">
-                            <div class="stat text-danger">
-                                <i class="align-middle" data-feather="dollar-sign"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <h1 class="mt-1 mb-3">Rp 0</h1>
-                    <div class="mb-0">
-                        <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Bebas Hutang! </span>
+                    <h1 class="mt-1 mb-3 fw-bold {% if my_debt > 0 %}text-danger{% endif %}">Rp {{ my_debt|intcomma }}</h1>
+                    <div class="mb-0 small">
+                        {% if my_debt > 0 %}
+                            <span class="text-danger fw-bold">Segera lunasi di ruang alat!</span>
+                        {% else %}
+                            <span class="text-success fw-bold">Bebas Hutang! Bagus!</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -86,74 +81,77 @@
     </div>
 
     <div class="row">
-        
         <div class="col-12 col-lg-8 col-xxl-9 d-flex">
-            <div class="card flex-fill">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Barang yang Sedang Kamu Bawa</h5>
-                </div>
+            <div class="card flex-fill shadow-sm border-0">
+                <div class="card-header bg-white border-0"><h5 class="card-title mb-0 fw-bold">Barang yang Kamu Bawa</h5></div>
                 <div class="table-responsive">
-                    <table class="table table-hover my-0">
-                        <thead>
+                    <table class="table table-hover my-0 align-middle">
+                        <thead class="bg-light small text-muted text-uppercase">
                             <tr>
-                                <th>Nama Alat</th>
+                                <th class="ps-4">Nama Alat</th>
                                 <th class="d-none d-xl-table-cell">Tgl Pinjam</th>
-                                <th class="d-none d-xl-table-cell">Tenggat</th>
+                                <th>Tenggat Kembali</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
+                            {% for loan in my_loans %}
                             <tr>
-                                <td><strong>Kamera Sony A6000</strong></td>
-                                <td class="d-none d-xl-table-cell">10 Feb 2026</td>
-                                <td class="d-none d-xl-table-cell text-danger">12 Feb 2026</td>
-                                <td><span class="badge bg-success">Aktif</span></td>
+                                <td class="ps-4"><strong>{{ loan.alat.nama_alat }}</strong></td>
+                                <td class="d-none d-xl-table-cell text-muted">{{ loan.waktu_pinjam|date:"d M Y" }}</td>
+                                <td>
+                                    {% if loan.waktu_kembali_rencana < now %}
+                                        <span class="text-danger fw-bold"><i data-feather="alert-circle" class="me-1" style="width:14px"></i> {{ loan.waktu_kembali_rencana|date:"d M Y" }}</span>
+                                    {% else %}
+                                        <span class="text-dark">{{ loan.waktu_kembali_rencana|date:"d M Y" }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge bg-primary-soft text-primary px-3">Aktif</span></td>
                             </tr>
-                            </tbody>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-5 text-muted">Kamu tidak sedang meminjam barang apapun.</td></tr>
+                            {% endfor %}
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
         <div class="col-12 col-lg-4 col-xxl-3 d-flex">
-            <div class="card flex-fill w-100">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Info Penting</h5>
-                </div>
+            <div class="card flex-fill shadow-sm border-0">
+                <div class="card-header bg-white border-0"><h5 class="card-title mb-0 fw-bold">Info & Aturan</h5></div>
                 <div class="card-body">
-                    
-                    <div class="d-flex align-items-start mb-3">
-                        <div class="flex-shrink-0">
-                            <div class="bg-light rounded-2 p-2 text-primary">
-                                <i data-feather="info"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <strong>Aturan Peminjaman</strong>
-                            <p class="text-muted small mb-0">Maksimal peminjaman 3 hari. Keterlambatan dikenakan denda Rp 5.000/hari.</p>
+                    <div class="d-flex align-items-start mb-4">
+                        <div class="bg-primary-light text-primary rounded p-2"><i data-feather="info"></i></div>
+                        <div class="ms-3">
+                            <div class="fw-bold small">Durasi Pinjam</div>
+                            <p class="text-muted extra-small mb-0">Maksimal 3 hari. Terlambat denda Rp 5.000/hari.</p>
                         </div>
                     </div>
-
+                    <div class="d-flex align-items-start mb-4">
+                        <div class="bg-success-light text-success rounded p-2"><i data-feather="shield"></i></div>
+                        <div class="ms-3">
+                            <div class="fw-bold small">Tanggung Jawab</div>
+                            <p class="text-muted extra-small mb-0">Barang rusak/hilang wajib ganti rugi sesuai harga alat.</p>
+                        </div>
+                    </div>
                     <hr>
-
-                    <div class="d-flex align-items-start mt-3">
-                        <div class="flex-shrink-0">
-                            <div class="bg-light rounded-2 p-2 text-success">
-                                <i data-feather="star"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <strong>Alat Baru Masuk!</strong>
-                            <p class="text-muted small mb-2">Lensa Canon 50mm f/1.8 udah tersedia loh.</p>
-                            <a href="{% url 'inventory:list' %}" class="btn btn-sm btn-outline-success">Cek Katalog</a>
-                        </div>
+                    <div class="bg-light p-3 rounded text-center">
+                        <p class="small text-dark mb-2">Butuh bantuan teknis?</p>
+                        <button class="btn btn-sm btn-dark w-100">Hubungi Petugas</button>
                     </div>
-
                 </div>
             </div>
         </div>
-
     </div>
-
 </div>
+
+<style>
+    .bg-primary-light { background: rgba(59, 125, 221, 0.1); }
+    .bg-warning-light { background: rgba(255, 193, 7, 0.1); }
+    .bg-success-light { background: rgba(40, 167, 69, 0.1); }
+    .bg-danger-light { background: rgba(220, 53, 69, 0.05); }
+    .bg-primary-soft { background: rgba(59, 125, 221, 0.1); }
+    .extra-small { font-size: 0.75rem; }
+</style>
 {% endblock %}

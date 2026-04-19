@@ -1,0 +1,28 @@
+<div id="update-area">
+    {% if kondisi == 'rusak' %}
+        <div class="alert alert-info border-0 shadow-sm mt-2">
+            <label class="form-label fw-bold text-primary">Biaya Perbaikan (Manual)</label>
+            <input type="number" name="biaya_kerusakan" class="form-control" 
+                   placeholder="Masukkan biaya..." 
+                   hx-get="{% url 'borrowing:update_receipt' %}" 
+                   hx-trigger="keyup changed delay:300ms" 
+                   hx-target="#live-total"
+                   hx-include="[name='peminjaman_id']">
+        </div>
+    {% elif kondisi == 'hilang' %}
+        <div class="alert alert-danger border-0 shadow-sm mt-2">
+            <p class="mb-0"><strong>Ganti Rugi:</strong> Rp {{ peminjaman.alat.denda_ganti_rugi }}</p>
+            <input type="hidden" name="biaya_kerusakan" value="{{ peminjaman.alat.denda_ganti_rugi }}">
+        </div>
+    {% else %}
+        <input type="hidden" name="biaya_kerusakan" value="0">
+    {% endif %}
+
+    <div hx-swap-oob="true" id="live-fisik">
+        Rp {{ denda_fisik|default:0 }}
+    </div>
+
+    <div hx-swap-oob="true" id="live-total">
+        Rp {{ total_tagihan|default:0 }}
+    </div>
+</div>

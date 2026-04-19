@@ -12,4 +12,7 @@ urlpatterns = [
     path('download-laporan/', views.download_laporan, name='download_laporan'),
     path('download-denda/', views.download_laporan_denda, name='download_denda'),
     path('lunasi/<int:pk>/', views.lunasi_denda, name='lunasi'),
+    # Lain-lainnya
+    path('check-kondisi/', views.check_kondisi_view, name='check_kondisi'),
+    path('update-receipt/', views.update_receipt_view, name='update_receipt'),
 ]

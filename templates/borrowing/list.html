@@ -1,155 +1,155 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Daftar Peminjaman{% endblock %}
+{% block title %}Transaksi Peminjaman{% endblock %}
 
 {% block content %}
 <div class="container-fluid p-0">
 
-    <div class="row mb-2 mb-xl-3">
-        <div class="col-auto d-none d-sm-block">
-            <h3><strong>Transaksi</strong> Peminjaman</h3>
+    <div class="row mb-3 align-items-center">
+        <div class="col-auto">
+            <h3 class="mb-0"><strong>Manajemen</strong> Peminjaman</h3>
+            <p class="text-muted small mb-0">Kelola persetujuan, pengembalian, dan denda siswa.</p>
         </div>
-
-        <div class="col-auto ms-auto text-end mt-n1">
+        <div class="col-auto ms-auto d-flex gap-2">
             {% if user.role in 'admin,petugas' %}
-            <button type="button" class="btn btn-success shadow-sm me-1" data-bs-toggle="modal" data-bs-target="#modalLaporan">
-                <i class="align-middle" data-feather="file-text"></i> Laporan
+            <button type="button" class="btn btn-outline-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalLaporan">
+                <i class="align-middle me-1" data-feather="download-cloud"></i> Laporan
             </button>
             {% endif %}
-
-            <a href="{% url 'borrowing:add' %}" class="btn btn-primary shadow-sm">
-                <i class="align-middle" data-feather="plus"></i> Ajukan Baru
+            <a href="{% url 'borrowing:add' %}" class="btn btn-primary shadow-sm px-4">
+                <i class="align-middle me-1" data-feather="plus"></i> Ajukan Baru
             </a>
         </div>
     </div>
 
-    <div class="card flex-fill">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Riwayat & Status Peminjaman</h5>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-xl-8 col-lg-7">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="?status=" class="btn {% if not current_status %}btn-primary{% else %}btn-light border{% endif %} rounded-pill px-3">Semua</a>
+                        <a href="?status=pending" class="btn {% if current_status == 'pending' %}btn-warning text-dark{% else %}btn-light border{% endif %} rounded-pill px-3">
+                            <i class="align-middle me-1" data-feather="clock" style="width:14px"></i> Menunggu
+                        </a>
+                        <a href="?status=dipinjam" class="btn {% if current_status == 'dipinjam' %}btn-info text-white{% else %}btn-light border{% endif %} rounded-pill px-3">
+                            <i class="align-middle me-1" data-feather="play" style="width:14px"></i> Aktif
+                        </a>
+                        <a href="?status=terlambat" class="btn {% if current_status == 'terlambat' %}btn-danger{% else %}btn-light border{% endif %} rounded-pill px-3">
+                            <i class="align-middle me-1" data-feather="alert-octagon" style="width:14px"></i> Terlambat 🚩
+                        </a>
+                        <a href="?status=dikembalikan" class="btn {% if current_status == 'dikembalikan' %}btn-success{% else %}btn-light border{% endif %} rounded-pill px-3">
+                            <i class="align-middle me-1" data-feather="check-circle" style="width:14px"></i> Selesai
+                        </a>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-lg-5">
+                    <form method="get" class="input-group">
+                        <input type="text" name="q" class="form-control border-end-0" placeholder="Cari Siswa atau Alat..." value="{{ request.GET.q }}">
+                        <button class="btn btn-light border border-start-0" type="submit">
+                            <i class="align-middle text-muted" data-feather="search"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
-        
+    </div>
+
+    <div class="card border-0 shadow-sm">
         <div class="table-responsive">
-            <table class="table table-hover my-0">
-                <thead>
+            <table class="table table-hover align-middle mb-0" style="min-width: 900px;">
+                <thead class="bg-light text-muted small text-uppercase">
                     <tr>
-                        <th>#</th>
-                        <th>Peminjam</th>
-                        <th>Alat</th>
-                        <th class="d-none d-md-table-cell">Tgl Pinjam</th>
-                        <th class="d-none d-md-table-cell">Tenggat</th>
-                        <th>Status</th>
-                        <th class="text-end">Aksi</th>
+                        <th class="ps-4 py-3">Peminjam</th>
+                        <th class="py-3">Aset / Alat</th>
+                        <th class="py-3 d-none d-lg-table-cell">Waktu Pinjam</th>
+                        <th class="py-3">Tenggat Kembali</th>
+                        <th class="py-3">Status & Tagihan</th>
+                        <th class="py-3 text-end pe-4">Aksi Cepat</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for p in peminjaman_list %}
                     <tr>
-                        <td>{{ forloop.counter }}</td>
-                        
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <img src="{% static 'img/avatars/avatar.jpg' %}" class="rounded-circle me-3 border shadow-sm" width="40" alt="User">
+                                <div>
+                                    <div class="fw-bold text-dark">{{ p.user.username|title }}</div>
+                                    <div class="small text-muted">{{ p.user.role|title }}</div>
+                                </div>
+                            </div>
+                        </td>
                         <td>
-                            <img src="{% static 'img/avatars/avatar.jpg' %}" width="32" height="32" class="rounded-circle my-n1" alt="Avatar">
-                            <span class="ms-2 fw-bold text-dark">{{ p.user.username }}</span>
-                            {% if p.user.role == 'user' %}
-                                <div class="small text-muted ms-5 mt-n1">Siswa</div>
+                            <div class="fw-bold text-primary">{{ p.alat.nama_alat }}</div>
+                            <span class="badge bg-light text-muted border font-monospace">{{ p.jumlah }} Unit</span>
+                        </td>
+                        <td class="d-none d-lg-table-cell">
+                            <div class="small">{{ p.waktu_pinjam|date:"d M Y" }}</div>
+                            <div class="text-muted extra-small">{{ p.waktu_pinjam|date:"H:i" }} WIB</div>
+                        </td>
+                        <td>
+                            {% if p.status == 'dipinjam' and p.waktu_kembali_rencana.date < now.date %}
+                                <div class="text-danger fw-bold">
+                                    <i class="align-middle me-1" data-feather="calendar" style="width:14px"></i>
+                                    {{ p.waktu_kembali_rencana|date:"d M Y" }}
+                                </div>
+                                <div class="badge bg-danger-soft text-danger extra-small mt-1">Telat!</div>
                             {% else %}
-                                <div class="small text-primary ms-5 mt-n1">{{ p.user.role|title }}</div>
+                                <div class="text-dark">{{ p.waktu_kembali_rencana|date:"d M Y" }}</div>
                             {% endif %}
                         </td>
-
-                        <td>
-                            <strong>{{ p.alat.nama_alat }}</strong>
-                            <br>
-                            <span class="badge bg-light text-dark border">{{ p.jumlah }} Unit</span>
-                        </td>
-
-                        <td class="d-none d-md-table-cell">
-                            {{ p.waktu_pinjam|date:"d M Y" }}<br>
-                            <small class="text-muted">{{ p.waktu_pinjam|date:"H:i" }} WIB</small>
-                        </td>
-
-                        <td class="d-none d-md-table-cell">
-                            {% if p.status == 'dipinjam' and p.waktu_kembali_rencana|date:'Y-m-d' < now|date:'Y-m-d' %}
-                                <span class="text-danger fw-bold">
-                                    <i class="align-middle" data-feather="alert-circle"></i> {{ p.waktu_kembali_rencana|date:"d M Y" }}
-                                </span>
-                            {% else %}
-                                {{ p.waktu_kembali_rencana|date:"d M Y" }}
-                            {% endif %}
-                        </td>
-
                         <td>
                             {% if p.status == 'pending' %}
-                                <span class="badge bg-secondary">Menunggu</span>
+                                <span class="badge bg-warning text-dark px-2">Menunggu</span>
                             {% elif p.status == 'dipinjam' %}
-                                <span class="badge bg-warning">Dipinjam</span>
+                                <span class="badge bg-primary px-2">Aktif</span>
                             {% elif p.status == 'dikembalikan' %}
-                                <span class="badge bg-success">Selesai</span>
+                                <span class="badge bg-success px-2">Selesai</span>
                             {% elif p.status == 'hilang' %}
-                                <span class="badge bg-danger">Hilang</span>
-                            {% elif p.status == 'ditolak' %}
-                                <span class="badge bg-dark">Ditolak</span>
+                                <span class="badge bg-dark px-2">Hilang</span>
                             {% endif %}
 
                             {% if p.detail_pengembalian.total_denda > 0 %}
                                 <div class="mt-1">
                                     {% if p.detail_pengembalian.status_pembayaran == 'belum_lunas' %}
-                                        <span class="badge bg-danger">Hutang: {{ p.detail_pengembalian.total_denda }}</span>
+                                        <span class="text-danger small fw-bold"><i class="fas fa-coins me-1"></i> Rp {{ p.detail_pengembalian.total_denda }}</span>
                                     {% else %}
-                                        <span class="badge bg-info">Lunas</span>
+                                        <span class="text-success small fw-bold"><i class="fas fa-check-circle me-1"></i> Lunas</span>
                                     {% endif %}
                                 </div>
                             {% endif %}
                         </td>
-
-                        <td class="text-end">
-                            
+                        <td class="text-end pe-4">
                             {% if user.role in 'admin,petugas' %}
-                                
-                                {% if p.status == 'pending' %}
-                                    <a href="{% url 'borrowing:approve' p.id %}" class="btn btn-sm btn-success" title="Approve">
-                                        <i class="align-middle" data-feather="check"></i>
-                                    </a>
-                                    <a href="{% url 'borrowing:reject' p.id %}" class="btn btn-sm btn-danger" title="Reject" onclick="return confirm('Tolak?');">
-                                        <i class="align-middle" data-feather="x"></i>
-                                    </a>
-
-                                {% elif p.status == 'dipinjam' %}
-                                    <a href="{% url 'borrowing:kembali' p.id %}" class="btn btn-sm btn-primary" title="Proses Kembali">
-                                        <i class="align-middle" data-feather="corner-down-left"></i> Kembali
-                                    </a>
-
-                                {% elif p.status in 'dikembalikan,hilang' %}
-                                    {% if p.detail_pengembalian.total_denda > 0 and p.detail_pengembalian.status_pembayaran == 'belum_lunas' %}
-                                        <a href="{% url 'borrowing:lunasi' p.id %}" 
-                                           class="btn btn-sm btn-warning text-dark fw-bold"
-                                           onclick="return confirm('Terima uang Rp {{ p.detail_pengembalian.total_denda }}?');">
-                                            <i class="align-middle" data-feather="dollar-sign"></i> Bayar
+                                <div class="btn-group shadow-sm border">
+                                    {% if p.status == 'pending' %}
+                                        <a href="{% url 'borrowing:approve' p.id %}" class="btn btn-sm btn-white text-success border-end" title="Setujui"><i data-feather="check-circle" style="width:16px"></i></a>
+                                        <a href="{% url 'borrowing:reject' p.id %}" class="btn btn-sm btn-white text-danger" onclick="return confirm('Tolak peminjaman ini?');" title="Tolak"><i data-feather="slash" style="width:16px"></i></a>
+                                    {% elif p.status == 'dipinjam' %}
+                                        <a href="{% url 'borrowing:kembali' p.id %}" class="btn btn-sm btn-primary d-flex align-items-center">
+                                            <i data-feather="corner-left-down" class="me-1" style="width:14px"></i> Kembali
+                                        </a>
+                                    {% elif p.status in 'dikembalikan,hilang' and p.detail_pengembalian.status_pembayaran == 'belum_lunas' %}
+                                        <a href="{% url 'borrowing:lunasi' p.id %}" class="btn btn-sm btn-warning fw-bold px-3">
+                                            <i data-feather="dollar-sign" style="width:14px"></i> Bayar
                                         </a>
                                     {% else %}
-                                        <span class="text-muted small"><i class="align-middle" data-feather="check-circle"></i> Done</span>
+                                        <button class="btn btn-sm btn-light text-muted" disabled><i data-feather="check" style="width:14px"></i> Done</button>
                                     {% endif %}
-
-                                {% endif %}
-
+                                </div>
                             {% else %}
-                                {% if p.status == 'pending' %}
-                                    <span class="text-muted small">...</span>
-                                {% elif p.detail_pengembalian.total_denda > 0 and p.detail_pengembalian.status_pembayaran == 'belum_lunas' %}
-                                    <span class="text-danger small fw-bold">Segera Bayar</span>
-                                {% else %}
-                                    <span class="text-muted small">-</span>
-                                {% endif %}
+                                <span class="text-muted small">No Actions</span>
                             {% endif %}
-
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center py-5">
-                            <div class="text-muted">
-                                <i class="align-middle mb-2" data-feather="inbox" style="width: 48px; height: 48px;"></i>
-                                <p>Belum ada data peminjaman.</p>
+                        <td colspan="6" class="text-center py-5">
+                            <div class="py-4">
+                                <i class="text-muted mb-3" data-feather="inbox" style="width: 64px; height: 64px;"></i>
+                                <h4 class="text-muted">Tidak ada data ditemukan</h4>
+                                <p class="text-muted small">Coba ubah filter atau kata kunci pencarian Anda.</p>
                             </div>
                         </td>
                     </tr>
@@ -157,35 +157,17 @@
                 </tbody>
             </table>
         </div>
-        </div>
-
-</div>
-
-<div class="modal fade" id="modalLaporan" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Cetak Laporan</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{% url 'borrowing:download_laporan' %}" method="get">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Dari Tanggal</label>
-                        <input type="date" name="start_date" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Sampai Tanggal</label>
-                        <input type="date" name="end_date" class="form-control" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Download Data</button>
-                    <button type="submit" class="btn btn-success" formaction="{% url 'borrowing:download_denda' %}">Download Keuangan</button>
-                </div>
-            </form>
-        </div>
     </div>
 </div>
 
+<div class="modal fade" id="modalLaporan" tabindex="-1">
+    </div>
+
+<style>
+    .extra-small { font-size: 0.75rem; }
+    .bg-danger-soft { background-color: rgba(220, 53, 69, 0.1); }
+    .table-responsive { border-radius: 0.5rem; }
+    .btn-white { background: #fff; border: 1px solid #dfe3e7; }
+    .btn-white:hover { background: #f8f9fa; }
+</style>
 {% endblock %}

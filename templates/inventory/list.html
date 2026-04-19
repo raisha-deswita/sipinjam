@@ -1,115 +1,125 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Daftar Inventaris{% endblock %}
+{% block title %}Database Inventaris{% endblock %}
 
 {% block content %}
 <div class="container-fluid p-0">
 
-    <div class="row mb-2 mb-xl-3">
-        <div class="col-auto d-none d-sm-block">
-            <h3><strong>Manajemen</strong> Inventaris</h3>
+    <div class="row mb-3 align-items-center">
+        <div class="col-auto">
+            <h3 class="mb-0"><strong>Manajemen</strong> Inventaris</h3>
+            <p class="text-muted small mb-0">Database aset dan alat praktik sekolah.</p>
         </div>
-
-        <div class="col-auto ms-auto text-end mt-n1">
+        <div class="col-auto ms-auto d-flex gap-2">
             {% if user.role in 'admin,petugas' %}
-                <a href="{% url 'inventory:download_aset' %}" class="btn btn-success shadow-sm me-1">
-                    <i class="align-middle" data-feather="download"></i> Export Excel
+                <a href="{% url 'inventory:download_aset' %}" class="btn btn-outline-success shadow-sm">
+                    <i class="align-middle me-1" data-feather="file-text"></i> Export Excel
                 </a>
-                
-                <a href="{% url 'inventory:add' %}" class="btn btn-primary shadow-sm">
-                    <i class="align-middle" data-feather="plus"></i> Tambah Barang
+                <a href="{% url 'inventory:add' %}" class="btn btn-primary shadow-sm px-4">
+                    <i class="align-middle me-1" data-feather="plus"></i> Tambah Barang
                 </a>
             {% endif %}
         </div>
     </div>
 
-    <div class="card flex-fill">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Database Aset Sekolah</h5>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="text-muted" data-feather="search"></i>
+                </span>
+                <input type="text" name="q" class="form-control border-start-0" placeholder="Cari Nama Alat, Kode, atau Lokasi..." value="{{ request.GET.q }}">
+                <button class="btn btn-dark px-4" type="submit">Cari</button>
+            </form>
         </div>
-        
+    </div>
+
+    <div class="card border-0 shadow-sm">
         <div class="table-responsive">
-            <table class="table table-hover my-0">
-                <thead>
+            <table class="table table-hover align-middle mb-0" style="min-width: 900px;">
+                <thead class="bg-light text-muted small text-uppercase">
                     <tr>
-                        <th>Kode</th>
-                        <th>Nama Alat</th>
-                        <th class="d-none d-md-table-cell">Kategori</th>
-                        <th>Stok</th>
-                        <th>Kondisi</th>
-                        <th class="d-none d-xl-table-cell">Lokasi</th>
-                        
+                        <th class="ps-4 py-3">ID / Kode</th>
+                        <th class="py-3">Informasi Alat</th>
+                        <th class="py-3">Kategori</th>
+                        <th class="py-3">Stok</th>
+                        <th class="py-3">Kondisi</th>
+                        <th class="py-3 d-none d-xl-table-cell">Lokasi</th>
                         {% if user.role in 'admin,petugas' %}
-                        <th class="text-end">Aksi</th>
+                        <th class="py-3 text-end pe-4">Aksi</th>
                         {% endif %}
                     </tr>
                 </thead>
                 <tbody>
                     {% for alat in alats %}
                     <tr>
-                        <td>
-                            <span class="badge bg-light text-dark border">{{ alat.id|default:"-" }}</span>
+                        <td class="ps-4">
+                            <span class="badge bg-light text-dark border font-monospace">#{{ alat.id|default:"-" }}</span>
                         </td>
-
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="bg-light rounded p-1 me-2 text-primary d-none d-sm-block">
+                                <div class="bg-primary-light text-primary rounded p-2 me-3">
                                     <i data-feather="box" style="width: 18px; height: 18px;"></i>
                                 </div>
-                                <strong>{{ alat.nama_alat }}</strong>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ alat.nama_alat }}</div>
+                                    <div class="text-muted small">Aset Terdaftar</div>
+                                </div>
                             </div>
                         </td>
-
-                        <td class="d-none d-md-table-cell">
-                            <span class="badge bg-secondary">{{ alat.kategori.nama_kategori }}</span>
+                        <td>
+                            <span class="badge bg-soft-info text-info border-info">{{ alat.kategori.nama_kategori }}</span>
                         </td>
-
                         <td>
                             {% if alat.stok <= 3 %}
-                                <span class="text-danger fw-bold">{{ alat.stok }} Unit</span>
+                                <div class="d-flex align-items-center text-danger fw-bold">
+                                    <i class="align-middle me-1" data-feather="alert-triangle" style="width:14px"></i>
+                                    {{ alat.stok }} Unit
+                                </div>
+                                <div class="text-danger extra-small">Stok Kritis!</div>
                             {% else %}
-                                {{ alat.stok }} Unit
+                                <div class="text-dark fw-bold">{{ alat.stok }} Unit</div>
                             {% endif %}
                         </td>
-
                         <td>
                             {% if alat.kondisi == 'baik' %}
-                                <span class="badge bg-success">Baik</span>
+                                <span class="badge bg-success-soft text-success"><i class="fas fa-check-circle me-1"></i> Baik</span>
                             {% elif alat.kondisi == 'rusak' %}
-                                <span class="badge bg-warning text-dark">Rusak</span>
+                                <span class="badge bg-warning-soft text-warning"><i class="fas fa-tools me-1"></i> Rusak</span>
                             {% else %}
-                                <span class="badge bg-danger">Hilang</span>
+                                <span class="badge bg-danger-soft text-danger"><i class="fas fa-times-circle me-1"></i> Hilang</span>
                             {% endif %}
                         </td>
-
                         <td class="d-none d-xl-table-cell text-muted">
-                            <i class="align-middle me-1" data-feather="map-pin" style="width: 14px;"></i> {{ alat.lokasi }}
+                            <i class="align-middle me-1 text-primary" data-feather="map-pin" style="width: 14px;"></i> 
+                            {{ alat.lokasi|default:"Gudang Utama" }}
                         </td>
-
                         {% if user.role in 'admin,petugas' %}
-                        <td class="text-end">
-                            <a href="{% url 'inventory:edit' alat.id %}" class="btn btn-sm btn-warning" title="Edit">
-                                <i class="align-middle" data-feather="edit-2"></i>
-                            </a>
-
-                            {% if user.role == 'admin' %}
-                                <a href="{% url 'inventory:delete' alat.id %}" 
-                                   class="btn btn-sm btn-danger" 
-                                   title="Hapus"
-                                   onclick="return confirm('Yakin mau hapus {{ alat.nama_alat }}? Data tidak bisa kembali!');">
-                                    <i class="align-middle" data-feather="trash-2"></i>
+                        <td class="text-end pe-4">
+                            <div class="btn-group shadow-sm border rounded">
+                                <a href="{% url 'inventory:edit' alat.id %}" class="btn btn-sm btn-white text-primary" title="Edit">
+                                    <i class="align-middle" data-feather="edit-3" style="width:14px"></i>
                                 </a>
-                            {% endif %}
+                                {% if user.role == 'admin' %}
+                                <a href="{% url 'inventory:delete' alat.id %}" 
+                                   class="btn btn-sm btn-white text-danger" 
+                                   title="Hapus"
+                                   onclick="return confirm('Yakin mau hapus {{ alat.nama_alat }}?');">
+                                    <i class="align-middle" data-feather="trash-2" style="width:14px"></i>
+                                </a>
+                                {% endif %}
+                            </div>
                         </td>
                         {% endif %}
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="7" class="text-center py-5">
-                            <div class="text-muted">
-                                <i class="align-middle mb-2" data-feather="package" style="width: 48px; height: 48px;"></i>
-                                <p>Belum ada data barang.</p>
+                            <div class="py-4">
+                                <i class="text-muted mb-3" data-feather="package" style="width: 64px; height: 64px;"></i>
+                                <h4 class="text-muted">Database Kosong</h4>
+                                <p class="text-muted small">Belum ada data barang terdaftar di sistem.</p>
                             </div>
                         </td>
                     </tr>
@@ -118,6 +128,18 @@
             </table>
         </div>
     </div>
-
 </div>
+
+<style>
+    /* Styling for Guru-Level UX */
+    .bg-primary-light { background: rgba(59, 125, 221, 0.1); }
+    .bg-success-soft { background: rgba(40, 167, 69, 0.1); }
+    .bg-warning-soft { background: rgba(255, 193, 7, 0.1); }
+    .bg-danger-soft { background: rgba(220, 53, 69, 0.1); }
+    .bg-soft-info { background: rgba(23, 162, 184, 0.1); }
+    .extra-small { font-size: 0.7rem; }
+    .btn-white { background: #fff; }
+    .btn-white:hover { background: #f8f9fa; }
+    .table-responsive { border-radius: 0.5rem; }
+</style>
 {% endblock %}
